@@ -1,8 +1,14 @@
 import { Formik, Form, Field, ErrorMessage } from 'formik';
 import * as Yup from 'yup';
 import css from './ContactForm.module.css';
+import { useDispatch, useSelector } from 'react-redux';
+import { addContact } from '../../redux/contactsSlice';
+import { selectContacts } from '../../redux/selectors';
 
-const ContactForm = ({ onAddContact }) => {
+const ContactForm = () => {
+  const dispatch = useDispatch();
+  const contacts = useSelector(selectContacts);
+
   const initialValues = { name: '', number: '' };
 
   const validationSchema = Yup.object({
@@ -16,12 +22,25 @@ const ContactForm = ({ onAddContact }) => {
   });
 
   const handleSubmit = (values, { resetForm }) => {
-    onAddContact(values.name, values.number);
+    const isDuplicate = contacts.some(
+      contact => contact.name.toLowerCase() === values.name.toLowerCase()
+    );
+
+    if (isDuplicate) {
+      alert(`${values.name} is already in contacts.`);
+      return;
+    }
+
+    dispatch(addContact(values.name, values.number));
     resetForm();
   };
 
   return (
-    <Formik initialValues={initialValues} validationSchema={validationSchema} onSubmit={handleSubmit}>
+    <Formik
+      initialValues={initialValues}
+      validationSchema={validationSchema}
+      onSubmit={handleSubmit}
+    >
       <Form className={css.form}>
         <label>
           Name:
@@ -33,7 +52,9 @@ const ContactForm = ({ onAddContact }) => {
           <Field type="text" name="number" className={css.input} />
           <ErrorMessage name="number" component="div" className={css.error} />
         </label>
-        <button className={css.button} type="submit">Add Contact</button>
+        <button className={css.button} type="submit">
+          Add Contact
+        </button>
       </Form>
     </Formik>
   );
